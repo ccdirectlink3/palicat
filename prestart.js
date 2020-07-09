@@ -15,7 +15,7 @@ ig.ENTITY.Player.inject({
 			this.skin.pet.remove();
 			this.skin.pet = null;
 		}
-		
+
 		var currentSkin = sc.playerSkins.getCurrentSkin("Pet");
 		if (currentSkin && currentSkin.loaded) {
 			if (currentSkin.name == "Palicat") {
@@ -31,7 +31,7 @@ ig.ENTITY.Player.inject({
 					petSkin: currentSkin
 					}, a || false)
 			}
-			
+
 		}
 	}
 });
@@ -48,14 +48,14 @@ var b = new ig.ActorConfig({
 	}),
 	buffVect2 = Vec2.create(),
 	buffVect3 = Vec3.create();
-	
+
 // This class is mostly a copy of the sc.playerPetEntity class
-palicatEntity = sc.ActorEntity.extend({
+const palicatEntity = sc.ActorEntity.extend({
 	// New attributes created for the palicat
 	vigorWasp: [null],
 	vigorWaspTimer: 0,
 	attributes: {spawnVigorWasp: false},
-	
+
 	npcEffects: new ig.EffectSheet("npc"),
 	petSkin: null,
 	configs: {},
@@ -125,26 +125,26 @@ palicatEntity = sc.ActorEntity.extend({
 	remove: function() {
 		this.hide();
 	},
-	
+
 	// We change the update function to add some combat behavior and delete/change others
 	update: function() {
 		// store the possible targets
 		var playerEntity = ig.game.playerEntity;
 		var playerTargetEntity = ig.game.playerEntity.combatStats.lastTarget;
-		
-		
+		let petColl;
+
 		// If the pet is not doing any action
 		if (!this.currentAction) {
 			var currentState = this.state,
 				distFromTarget = 0; // use to store the distance from the selected target
-			
+
 			// Calculate the distance from the different possible targets
 			var distFromPlayerEntity = ig.CollTools.getGroundDistance(this.coll, playerEntity.coll),
 				distFromPlayerTarget = 0;
 			if (playerTargetEntity)
 				distFromPlayerTarget = ig.CollTools.getGroundDistance(this.coll, playerTargetEntity.coll);
-				
-				
+
+
 			// Change the target of the palicat
 			// In battle
 			if (sc.model.isCombatActive() && playerTargetEntity) {
@@ -158,14 +158,14 @@ palicatEntity = sc.ActorEntity.extend({
 					this.target = playerTargetEntity;
 					distFromTarget = distFromPlayerTarget;
 				}
-			} 
+			}
 			// Out of battle
 			else {
 				// Always the player
 				this.target = playerEntity;
 				distFromTarget = distFromPlayerEntity;
 			}
-			
+
 			// Update state according to the distance frome the target, unlock the target if the conditions are met
 			if (sc.model.isCombatActive()) {
 				if (distFromTarget <= 60 || distFromTarget >= 200) currentState = 2 // "stay in range" state
@@ -173,8 +173,8 @@ palicatEntity = sc.ActorEntity.extend({
 			else {
 				distFromTarget >= 24 && (currentState = 1); // "follow closely" state
 			}
-			
-			
+
+
 			// Hide the pet if he needs to be hidden
 			var hidePet = playerEntity._hidden || playerEntity.hidePets;
 			if (!this.tempHidden && hidePet) {
@@ -185,7 +185,7 @@ palicatEntity = sc.ActorEntity.extend({
 					false;
 				this.animState.alpha = 1
 			}
-			
+
 			// If the pet is not hidden
 			if (!this.tempHidden) {
 				// Teleport the pet back to the player if we're not in combat or in a cutscene after 3 seconds
@@ -193,7 +193,7 @@ palicatEntity = sc.ActorEntity.extend({
 					this.outOfScreenTime = ig.EntityTools.isInScreen(this, 0) ? 0 : this.outOfScreenTime + ig.system.tick;
 					this.outOfScreenTime > 3 && this.resetPos(false, true)
 				}
-				
+
 				// If the state has changed
 				if (this.state !== currentState) {
 					this.state = currentState;
@@ -212,8 +212,8 @@ palicatEntity = sc.ActorEntity.extend({
 					}
 				}
 				// Calculation and update of the pet's velocity depending on the distance from the player
-				hasArrived = false;
-				velocity = 1;
+				let hasArrived = false;
+				let velocity = 1;
 				if (this.state === 1) {
 					velocity = distFromTarget > 48 ?
 						1 : Math.max(0.25, Math.pow(distFromTarget / 48, 2));
@@ -222,7 +222,7 @@ palicatEntity = sc.ActorEntity.extend({
 				}
 				this.coll.relativeVel = velocity;
 				this.nav.path.startRelativeVel = velocity;
-				
+
 				// Check if the pet arrived at destination and reset his state
 				if (this.state === 1 || this.state === 2) {
 					if (this.nav.path.moveEntity()) {
@@ -232,7 +232,7 @@ palicatEntity = sc.ActorEntity.extend({
 				} else this.state === 0 && (hasArrived = true);
 				// Rotate the entity to face the player if he arrived
 				if (hasArrived) {
-					distPlayer = ig.CollTools.getDistVec2(this.coll, this.target.coll, buffVect2);
+					let distPlayer = ig.CollTools.getDistVec2(this.coll, this.target.coll, buffVect2);
 					Vec2.rotateToward(this.face, distPlayer, Math.PI * 2 * ig.system.tick * 2);
 				}
 				// Update the respawn coordinate
@@ -241,9 +241,9 @@ palicatEntity = sc.ActorEntity.extend({
 					this.stepStats.terrain != ig.TERRAIN.QUICKSAND) && Vec3.assign(this.respawnPos, this.coll.pos)
 			}
 		}
-		
+
 		this.parent();
-		
+
 		// If their is special idles for the pet, and if he is not doing any action
 		if (this.idleSpecials && !this.currentAction)
 			// If the entity is not moving (no acceleration)
@@ -251,27 +251,27 @@ palicatEntity = sc.ActorEntity.extend({
 				// Make the pet do one of his idle animation (choosen randomly) after 2 secondes
 				this.idleTimer = this.idleTimer - ig.system.tick;
 				if (this.idleTimer <= 0) {
-					idIdleSpecial = Math.floor(this.idleSpecials * Math.random()) + 1;
+					let idIdleSpecial = Math.floor(this.idleSpecials * Math.random()) + 1;
 					this.setCurrentAnim("idleSpecial" + idIdleSpecial, true, this.walkAnims.idle, true);
 					this.resetIdleTimer(2)
 				}
 			} else this.resetIdleTimer();
-		
+
 		// If the pet is not hidden and if it is not doing any action
 		if (!this.tempHidden && !this.currentAction) {
 			// Check for collision and move the pet accordingly
 			petColl = this.coll;
-			isColliding = false;
+			let isColliding = false;
 			if (petColl.type == ig.COLLTYPE.IGNORE) {
-				overlapingEntities = ig.game.getEntitiesInRectangle(
-						petColl.pos.x, 
-						petColl.pos.y, 
-						petColl.pos.z, 
-						petColl.size.x, 
-						petColl.size.y, 
-						petColl.size.z, 
+				let overlapingEntities = ig.game.getEntitiesInRectangle(
+						petColl.pos.x,
+						petColl.pos.y,
+						petColl.pos.z,
+						petColl.size.x,
+						petColl.size.y,
+						petColl.size.z,
 						this);
-				for (indexEntity = overlapingEntities.length; indexEntity--;) {
+				for (let indexEntity = overlapingEntities.length; indexEntity--;) {
 					var h = overlapingEntities[indexEntity];
 					if (h instanceof sc.ActorEntity && h.coll.type !== ig.COLLTYPE.TRIGGER) {
 						ig.CollTools.getDistVec2(h.coll, petColl, buffVect2);
@@ -282,7 +282,7 @@ palicatEntity = sc.ActorEntity.extend({
 				}
 			}
 			this.pushTimer = isColliding ? this.pushTimer + ig.system.tick : 0;
-			terrainColl = ig.terrain.getTerrain(petColl, true);
+			let terrainColl = ig.terrain.getTerrain(petColl, true);
 			if (ig.terrain.isDangerTerrain(terrainColl) && terrainColl != ig.TERRAIN.QUICKSAND) {
 				this.getAlignedPos(ig.ENTITY_ALIGN.BOTTOM, d);
 				this.resetPos(false,
@@ -293,7 +293,7 @@ palicatEntity = sc.ActorEntity.extend({
 		//////////////////////////////
 		// VigorWasp handler
 		//////////////////////////////
-		
+
 		// If a vigor wasp need to be placed
 		if (this.attributes.spawnVigorWasp) {
 			var xOffset = 0;
@@ -311,10 +311,10 @@ palicatEntity = sc.ActorEntity.extend({
 			this.vigorWaspTimer = 15;
 			this.attributes.spawnVigorWasp = false;
 		}
-		
+
 		// If the pet is not in battle, we reset the timer for the vigor wasp
 		!sc.model.isCombatActive() && (this.vigorWaspTimer = 3);
-		
+
 		// If the pet is in battle and not doing any action
 		if (sc.model.isCombatActive() && !this.currentAction) {
 			// If their is less than 2 vigor wasp already spawned
@@ -395,9 +395,9 @@ sc.ITEM_DESTRUCT_TYPE["vigorWasp"] = {
 			offY: 0,
 			offX: 0
 		},
-        dirs: "2",
-        flipX: [0, 1],
-        tileOffsets: [0, 0],
+		dirs: "2",
+		flipX: [0, 1],
+		tileOffsets: [0, 0],
 		SUB: [{
 			name: "default",
 			time: 0.10,
@@ -413,12 +413,12 @@ sc.ITEM_DESTRUCT_TYPE["vigorWasp"] = {
 };
 
 // Definition of the vigorWasp class
-VigorWasp = ig.ENTITY.ItemDestruct.extend({
+const VigorWasp = ig.ENTITY.ItemDestruct.extend({
 	init: function(a, b, c, e) {
 		this.parent(a, b, c, e);
 		// Set the entity back to a state where it can be destroyed
 		//(stange problem, where a new ItemDestruct entity had the same values as others if their mapId were the same)
-		this.unSetDropped(); 
+		this.unSetDropped();
 		this.coll.type = ig.COLLTYPE.IGNORE; // So entities can go through it
 	},
 	isBallDestroyer: function() {
@@ -434,8 +434,8 @@ VigorWasp = ig.ENTITY.ItemDestruct.extend({
 		this.parent();
 		// We call an even regen on the player
 		new ig.ACTION_STEP.REGEN_HP({
-			value: 0.3, 
-			target: ig.game.playerEntity, 
+			value: 0.3,
+			target: ig.game.playerEntity,
 			hideNumbers: false
 			}).start(ig.game.playerEntity.getCombatant())
 		// We kill the entity if it has been destroyed by a hit
